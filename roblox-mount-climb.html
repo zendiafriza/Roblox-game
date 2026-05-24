@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roblox Mount Climb – Game & Script Pack</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0d14;
+    --surface: #12151f;
+    --card: #181c28;
+    --border: #232838;
+    --border2: #2e3548;
+    --cyan: #00d4ff;
+    --green: #39ff7a;
+    --red: #ff4757;
+    --yellow: #ffd32a;
+    --text: #dde6f5;
+    --muted: #4f5e7a;
+    --mid: #8a9ab5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; }
+
+  /* GRID BG */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative; z-index: 10;
+    text-align: center;
+    padding: 56px 24px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .version-tag {
+    display: inline-block;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.3);
+    color: var(--cyan);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(56px, 10vw, 110px);
+    letter-spacing: 5px;
+    line-height: 0.9;
+    background: linear-gradient(160deg, #fff 0%, var(--cyan) 60%, #0080ff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+  }
+  .sub { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+
+  /* NAV TABS */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(11,13,20,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 0;
+    overflow-x: auto;
+  }
+  nav a {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 7px;
+    padding: 14px 22px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 1px;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  nav a:hover, nav a.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+  /* SECTIONS */
+  section {
+    display: none;
+    position: relative; z-index: 10;
+    max-width: 1080px; margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  section.active { display: block; }
+
+  /* GAME CANVAS AREA */
+  .game-wrapper {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .game-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted);
+  }
+  .game-bar span { color: var(--cyan); font-weight: 700; }
+  canvas#gameCanvas {
+    display: block;
+    width: 100%;
+    image-rendering: pixelated;
+  }
+  .game-controls {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    padding: 14px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .ctrl-group { display: flex; gap: 8px; align-items: center; }
+  .ctrl-group label { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  /* KEYS DISPLAY */
+  .keys-info {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+  }
+  kbd {
+    display: inline-block;
+    background: var(--border2);
+    border: 1px solid var(--mid);
+    border-bottom: 3px solid var(--mid);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; color: var(--text);
+  }
+
+  /* STATS */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 12px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 18px;
+    text-align: center;
+  }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; }
+  .stat-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+
+  /* SCRIPT VIEWER */
+  .script-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .script-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; }
+  .file-tag {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    background: rgba(57,255,122,0.1); border: 1px solid var(--green);
+    color: var(--green); padding: 3px 9px; border-radius: 2px; letter-spacing: 1px;
+  }
+  pre {
+    background: #080a10;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 22px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; line-height: 1.9;
+    overflow-x: auto;
+    white-space: pre;
+    color: #a0b8d8;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .kw { color: #8be9fd; }
+  .fn { color: #50fa7b; }
+  .str { color: #f1fa8c; }
+  .cmt { color: #44475a; font-style: italic; }
+  .num { color: #bd93f9; }
+  .btn-copy {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border2);
+    color: var(--muted); font-family: 'Space Mono', monospace;
+    font-size: 10px; padding: 4px 10px; border-radius: 2px;
+    cursor: pointer; letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .btn-copy:hover { color: var(--cyan); border-color: var(--cyan); }
+
+  /* ACTION BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 1px;
+    padding: 11px 20px; border-radius: 4px;
+    border: none; cursor: pointer;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .btn-dl { background: var(--cyan); color: #000; font-weight: 700; }
+  .btn-dl:hover { background: #33dcff; box-shadow: 0 0 18px rgba(0,212,255,0.4); }
+  .btn-sec { background: transparent; border: 1px solid var(--border2); color: var(--mid); }
+  .btn-sec:hover { border-color: var(--cyan); color: var(--cyan); }
+  .btn-grn { background: var(--green); color: #000; font-weight: 700; }
+  .btn-grn:hover { box-shadow: 0 0 18px rgba(57,255,122,0.4); }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+  /* SECTIONS STYLING */
+  .section-tag {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    letter-spacing: 3px; color: var(--muted); text-transform: uppercase;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+  }
+  .section-tag::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .tip-box {
+    background: rgba(0,212,255,0.06);
+    border-left: 3px solid var(--cyan);
+    border-radius: 0 6px 6px 0;
+    padding: 14px 18px; margin-bottom: 20px;
+    font-size: 14px; color: var(--mid); line-height: 1.7;
+  }
+
+  .script-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+
+  /* STEP LIST */
+  .steps { list-style: none; }
+  .steps li {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .steps li:last-child { border: none; }
+  .step-num {
+    width: 30px; height: 30px; flex-shrink: 0;
+    background: var(--cyan); color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+    border-radius: 2px;
+  }
+  .step-num.done { background: var(--green); }
+  .steps li p { font-size: 14px; line-height: 1.65; color: var(--mid); }
+  .steps li strong { color: var(--text); }
+
+  /* PROGRESS BAR */
+  .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 12px 0; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+
+  footer {
+    position: relative; z-index: 10;
+    border-top: 1px solid var(--border);
+    padding: 28px 24px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; color: var(--muted); letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="version-tag">ROBLOX STUDIO • LUAU SCRIPT PACK</div>
+  <h1>MOUNT<br>CLIMB</h1>
+  <p class="sub">Game Simulator + Script Pack Lengkap untuk Roblox</p>
+</header>
+
+<nav>
+  <a class="active" onclick="showTab('game')">▶ GAME DEMO</a>
+  <a onclick="showTab('scripts')">📜 SCRIPTS</a>
+  <a onclick="showTab('cara')">⚙ CARA PAKAI</a>
+  <a onclick="showTab('download')">⬇ DOWNLOAD</a>
+</nav>
+
+<!-- ===================== GAME DEMO ===================== -->
+<section id="tab-game" class="active">
+  <div class="section-tag">Simulasi Game Mendaki Gunung</div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statAlt" style="color:var(--cyan);">0</div>
+      <div class="stat-label">Ketinggian (m)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statScore" style="color:var(--green);">0</div>
+      <div class="stat-label">Skor</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statStamina" style="color:var(--yellow);">100</div>
+      <div class="stat-label">Stamina</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statLevel" style="color:var(--red);">1</div>
+      <div class="stat-label">Level</div>
+    </div>
+  </div>
+
+  <div class="game-wrapper">
+    <div class="game-bar">
+      <span id="gameStatus">⛰ Siap mendaki — tekan SPACE atau klik START</span>
+      <span id="gameTime">00:00</span>
+    </div>
+    <canvas id="gameCanvas" width="900" height="420"></canvas>
+    <div class="keys-info">
+      <kbd>←</kbd><kbd>→</kbd> Gerak &nbsp;|&nbsp;
+      <kbd>SPACE</kbd> Lompat / Panjat &nbsp;|&nbsp;
+      <kbd>↑</kbd> Panjat Cepat &nbsp;|&nbsp;
+      <kbd>S</kbd> Start &nbsp;|&nbsp;
+      <kbd>R</kbd> Restart
+    </div>
+    <div class="game-controls">
+      <div class="ctrl-group">
+        <button class="btn btn-dl" onclick="startGame()" id="btnStart">▶ START GAME</button>
+        <button class="btn btn-sec" onclick="resetGame()">↺ RESET</button>
+      </div>
+      <div class="ctrl-group" style="margin-left:auto;">
+        <label>Kesulitan:</label>
+        <select id="diffSel" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px;cursor:pointer;">
+          <option value="easy">Mudah</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Sulit</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip-box">
+    💡 <strong>Tips:</strong> Pantau stamina kamu! Jika stamina habis, karakter akan jatuh. Kumpulkan bintang ⭐ untuk +25 poin. Capai puncak gunung untuk bonus besar!
+  </div>
+</section>
+
+<!-- ===================== SCRIPTS ===================== -->
+<section id="tab-scripts">
+  <div class="section-tag">Script Roblox Studio (Luau)</div>
+
+  <div class="script-card">
+    <div class="script-header">
+      <div class="script-title">1. LocalScript – Sistem Climbing</div>
+      <span class="file-tag">StarterCharacterScripts</span>
+    </div>
+    <pre id="code1"><button class="btn-copy" onclick="copyCode('code1')">COPY</button><span class="cmt">-- MountClimb LocalScript</span>
+<span class="cmt">-- Taruh di: StarterCharacterScripts &gt; LocalScript</span>
+<span class="cmt">-- ============================================</span>
+
+<span class="kw">local</span> Players = game:<span class="fn">GetService</span>(<span class="str">"Players"</span>)
+<span class="kw">local</span> RunService = game:<span class="fn">GetService</span>(<span class="str">"RunService"</span>)
+<span class="kw">local</span> UIS = game:<span class="fn">GetService</span>(<span class="str">"UserInputService"</span>)
+
+<span class="kw">local</span> player = Players.LocalPlayer
+<span class="kw">local</span> char = player.Character <span class="kw">or</span> player.CharacterAdded:<span class="fn">Wait</span>()
+<span class="kw">local</span> hum = char:<span class="fn">WaitForChild</span>(<span class="str">"Humanoid"</span>)
+<span class="kw">local</span> root = char:<span class="fn">WaitForChild</span>(<span class="str">"HumanoidRootPart"</span>)
+
+<span class="cmt">-- Konfigurasi</span>
+<span class="kw">local</span> CFG = {
+    CLIMB_SPEED    = <span class="num">12</span>,
+    MAX_STAMINA    = <span class="num">100</span>,
+    STAMINA_DRAIN  = <span class="num">0.8</span>,
+    STAMINA_REGEN  = <span class="num">0.5</span>,
+    CHECK_DIST     = <span class="num">2.8</span>,
+    WALL_OFFSET    = <span class="num">2.5</span>,
+}
+
+<span class="kw">local</span> stamina = CFG.MAX_STAMINA
+<span class="kw">local</span> isClimbing = <span class="kw">false</span>
+<span class="kw">local</span> climbPart = Instance.<span class="fn">new</span>(<span class="str">"TrussPart"</span>)
+
+<span class="cmt">-- Setup climb part (invisible)</span>
+climbPart.Size = Vector3.<span class="fn">new</span>(<span class="num">1</span>, <span class="num">6</span>, <span class="num">1</span>)
+climbPart.Transparency = <span class="num">1</span>
+climbPart.CanCollide = <span class="kw">false</span>
+climbPart.Anchored = <span class="kw">false</span>
+climbPart.Parent = workspace
+
+<span class="cmt">-- UI Stamina bar</span>
+<span class="kw">local</span> gui = Instance.<span class="fn">new</span>(<span class="str">"ScreenGui"</span>, player.PlayerGui)
+<span class="kw">local</span> frame = Instance.<span class="fn">new</span>(<span class="str">"Frame"</span>, gui)
+frame.Size = UDim2.<span class="fn">new</span>(<span class="num">0</span>, <span class="num">220</span>, <span class="num">0</span>, <span class="num">28</span>)
+frame.Position = UDim2.<span class="fn">new</span>(<span class="num">0.5</span>, <span class="num">-110</span>, <span class="num">0</span>, <span class="num">12</span>)
+frame.BackgroundColor3 = Color3.<span class="fn">fromRGB</span>(<span class="num">20</span>, <span class="num">20</span>, <span class="num">30</span>)
+
+<span class="kw">local</span> bar = Instance.<span class="fn">new</span>(<span class="str">"Frame"</span>, frame)
+bar.Size = UDim2.<span class="fn">new</span>(<span class="num">1</span>, <span class="num">0</span>, <span class="num">1</span>, <span class="num">0</span>)
+bar.BackgroundColor3 = Color3.<span class="fn">fromRGB</span>(<span class="num">57</span>, <span class="num">255</span>, <span class="num">122</span>)
+
+<span class="cmt">-- Raycast deteksi dinding</span>
+<span class="kw">local function</span> <span class="fn">checkWall</span>()
+    <span class="kw">local</span> dir = root.CFrame.LookVector * CFG.CHECK_DIST
+    <span class="kw">local</span> params = RaycastParams.<span class="fn">new</span>()
+    params.FilterDescendantsInstances = {char, climbPart}
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    <span class="kw">return</span> workspace:<span class="fn">Raycast</span>(root.Position, dir, params)
+<span class="kw">end</span>
+
+<span class="cmt">-- Main loop</span>
+RunService.Heartbeat:<span class="fn">Connect</span>(<span class="kw">function</span>(dt)
+    <span class="kw">local</span> hit = <span class="fn">checkWall</span>()
+    <span class="kw">local</span> climbKey = UIS:<span class="fn">IsKeyDown</span>(Enum.KeyCode.W)
+        <span class="kw">or</span> UIS:<span class="fn">IsKeyDown</span>(Enum.KeyCode.Up)
+
+    <span class="kw">if</span> hit <span class="kw">and</span> climbKey <span class="kw">and</span> stamina > <span class="num">0</span> <span class="kw">then</span>
+        isClimbing = <span class="kw">true</span>
+        climbPart.CFrame = CFrame.<span class="fn">new</span>(hit.Position)
+        hum:<span class="fn">ChangeState</span>(Enum.HumanoidStateType.Climbing)
+        stamina = math.<span class="fn">max</span>(<span class="num">0</span>, stamina - CFG.STAMINA_DRAIN)
+    <span class="kw">else</span>
+        isClimbing = <span class="kw">false</span>
+        climbPart.CFrame = CFrame.<span class="fn">new</span>(<span class="num">0</span>, <span class="num">-999</span>, <span class="num">0</span>)
+        stamina = math.<span class="fn">min</span>(CFG.MAX_STAMINA, stamina + CFG.STAMINA_REGEN)
+    <span class="kw">end</span>
+
+    bar.Size = UDim2.<span class="fn">new</span>(stamina / CFG.MAX_STAMINA, <span class="num">0</span>, <span class="num">1</span>, <span class="num">0</span>)
+
+    <span class="kw">if</span> stamina == <span class="num">0</span> <span class="kw">and</span> isClimbing <span class="kw">then</span>
+        hum:<span class="fn">ChangeState</span>(Enum.HumanoidStateType.Freefall)
+    <span class="kw">end</span>
+<span class="kw">end</span>)</pre>
+    <div class="btn-row">
+      <button class="btn btn-dl" onclick="dlScript('climb')">⬇ Download Script</button>
+    </div>
+  </div>
+
+  <div class="script-card">
+    <div class="script-header">
+      <div class="script-title">2. ServerScript – Game Manager</div>
+      <span class="file-tag">ServerScriptService</span>
+    </div>
+    <pre id="code2"><button class="btn-copy" onclick="copyCode('code2')">COPY</button><span class="cmt">-- MountClimb Server Script</span>
+<span class="cmt">-- Taruh di: ServerScriptService &gt; Script</span>
+<span class="cmt">-- ======================================</span>
+
+<span class="kw">local</span> Players = game:<span class="fn">GetService</span>(<span class="str">"Players"</span>)
+<span class="kw">local</span> ReplicatedStorage = game:<span class="fn">GetService</span>(<span class="str">"ReplicatedStorage"</span>)
+
+<span class="cmt">-- RemoteEvent untuk sinkronisasi skor</span>
+<span class="kw">local</span> scoreEvent = Instance.<span class="fn">new</span>(<span class="str">"RemoteEvent"</span>)
+scoreEvent.Name = <span class="str">"ScoreUpdate"</span>
+scoreEvent.Parent = ReplicatedStorage
+
+<span class="kw">local</span> scores = {}
+
+<span class="cmt">-- Leaderboard setup</span>
+<span class="kw">local function</span> <span class="fn">setupLeaderboard</span>(player)
+    <span class="kw">local</span> ls = Instance.<span class="fn">new</span>(<span class="str">"Folder"</span>)
+    ls.Name = <span class="str">"leaderstats"</span>
+    ls.Parent = player
+
+    <span class="kw">local</span> height = Instance.<span class="fn">new</span>(<span class="str">"IntValue"</span>)
+    height.Name = <span class="str">"Ketinggian"</span>
+    height.Value = <span class="num">0</span>
+    height.Parent = ls
+
+    <span class="kw">local</span> score = Instance.<span class="fn">new</span>(<span class="str">"IntValue"</span>)
+    score.Name = <span class="str">"Skor"</span>
+    score.Value = <span class="num">0</span>
+    score.Parent = ls
+
+    scores[player.UserId] = {height = <span class="num">0</span>, score = <span class="num">0</span>}
+<span class="kw">end</span>
+
+<span class="cmt">-- Update skor dari client</span>
+scoreEvent.OnServerEvent:<span class="fn">Connect</span>(<span class="kw">function</span>(player, h, s)
+    <span class="kw">local</span> ls = player:<span class="fn">FindFirstChild</span>(<span class="str">"leaderstats"</span>)
+    <span class="kw">if</span> ls <span class="kw">then</span>
+        ls.Ketinggian.Value = math.<span class="fn">max</span>(ls.Ketinggian.Value, h)
+        ls.Skor.Value = ls.Skor.Value + s
+    <span class="kw">end</span>
+<span class="kw">end</span>)
+
+Players.PlayerAdded:<span class="fn">Connect</span>(<span class="fn">setupLeaderboard</span>)
+Players.PlayerRemoving:<span class="fn">Connect</span>(<span class="kw">function</span>(p)
+    scores[p.UserId] = <span class="kw">nil</span>
+<span class="kw">end</span>)</pre>
+    <div class="btn-row">
+      <button class="btn btn-dl" onclick="dlScript('server')">⬇ Download Script</button>
+    </div>
+  </div>
+
+  <div class="script-card">
+    <div class="script-header">
+      <div class="script-title">3. ModuleScript – Mountain Generator</div>
+      <span class="file-tag">ReplicatedStorage</span>
+    </div>
+    <pre id="code3"><button class="btn-copy" onclick="copyCode('code3')">COPY</button><span class="cmt">-- MountainGenerator ModuleScript</span>
+<span class="cmt">-- Taruh di: ReplicatedStorage &gt; ModuleScript</span>
+<span class="cmt">-- ==========================================</span>
+
+<span class="kw">local</span> MountainGen = {}
+
+<span class="cmt">-- Generate gunung procedural</span>
+<span class="kw">function</span> MountainGen:<span class="fn">Generate</span>(config)
+    config = config <span class="kw">or</span> {}
+    <span class="kw">local</span> cfg = {
+        baseX    = config.baseX    <span class="kw">or</span> <span class="num">0</span>,
+        baseZ    = config.baseZ    <span class="kw">or</span> <span class="num">0</span>,
+        height   = config.height   <span class="kw">or</span> <span class="num">200</span>,
+        width    = config.width    <span class="kw">or</span> <span class="num">80</span>,
+        steps    = config.steps    <span class="kw">or</span> <span class="num">20</span>,
+        material = config.material <span class="kw">or</span> Enum.Material.Rock,
+        color    = config.color    <span class="kw">or</span> Color3.<span class="fn">fromRGB</span>(<span class="num">120</span>, <span class="num">100</span>, <span class="num">80</span>),
+    }
+
+    <span class="kw">local</span> folder = Instance.<span class="fn">new</span>(<span class="str">"Folder"</span>)
+    folder.Name = <span class="str">"Mountain"</span>
+    folder.Parent = workspace
+
+    <span class="kw">for</span> i = <span class="num">1</span>, cfg.steps <span class="kw">do</span>
+        <span class="kw">local</span> ratio = i / cfg.steps
+        <span class="kw">local</span> w = cfg.width * (<span class="num">1</span> - ratio * <span class="num">0.9</span>)
+        <span class="kw">local</span> y = (cfg.height / cfg.steps) * i
+        <span class="kw">local</span> offset = math.<span class="fn">random</span>(-<span class="num">3</span>, <span class="num">3</span>)
+
+        <span class="kw">local</span> part = Instance.<span class="fn">new</span>(<span class="str">"Part"</span>)
+        part.Size = Vector3.<span class="fn">new</span>(w, <span class="num">8</span>, w)
+        part.Position = Vector3.<span class="fn">new</span>(
+            cfg.baseX + offset,
+            y,
+            cfg.baseZ + offset
+        )
+        part.Material = cfg.material
+        part.BrickColor = BrickColor.<span class="fn">new</span>(cfg.color)
+        part.Anchored = <span class="kw">true</span>
+        part.Parent = folder
+
+        <span class="cmt">-- Snow cap di puncak</span>
+        <span class="kw">if</span> i > cfg.steps * <span class="num">0.8</span> <span class="kw">then</span>
+            part.Material = Enum.Material.Snow
+            part.BrickColor = BrickColor.<span class="fn">new</span>(<span class="str">"White"</span>)
+        <span class="kw">end</span>
+    <span class="kw">end</span>
+
+    <span class="kw">return</span> folder
+<span class="kw">end</span>
+
+<span class="kw">return</span> MountainGen</pre>
+    <div class="btn-row">
+      <button class="btn btn-dl" onclick="dlScript('mountain')">⬇ Download Script</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CARA PAKAI ===================== -->
+<section id="tab-cara">
+  <div class="section-tag">Panduan Instalasi di Roblox Studio</div>
+  <ul class="steps">
+    <li>
+      <div class="step-num">1</div>
+      <div>
+        <p><strong>Buka Roblox Studio</strong> — buat experience baru pilih template <em>Baseplate</em>.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">2</div>
+      <div>
+        <p><strong>Import Script Climbing:</strong> Di Explorer, klik kanan <code>StarterCharacterScripts</code> → Insert Object → <strong>LocalScript</strong>. Paste isi script <em>Sistem Climbing</em> ke dalamnya.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">3</div>
+      <div>
+        <p><strong>Import Server Script:</strong> Klik kanan <code>ServerScriptService</code> → Insert Object → <strong>Script</strong>. Paste isi script <em>Game Manager</em>.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">4</div>
+      <div>
+        <p><strong>Tambah Mountain Generator:</strong> Klik kanan <code>ReplicatedStorage</code> → Insert Object → <strong>ModuleScript</strong>. Paste script <em>Mountain Generator</em>. Panggil dari script lain dengan <code>require()</code>.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num">5</div>
+      <div>
+        <p><strong>Buat Gunung:</strong> Di ServerScriptService tambah script baru, isi: <br><code>local MG = require(game.ReplicatedStorage.ModuleScript)<br>MG:Generate({height=300, width=100})</code></p>
+      </div>
+    </li>
+    <li>
+      <div class="step-num done">✓</div>
+      <div>
+        <p><strong>Tekan F5</strong> untuk Play Test. Karaktermu sudah bisa memanjat dinding gunung!</p>
+      </div>
+    </li>
+  </ul>
+
+  <div class="tip-box" style="margin-top:24px;">
+    ⚙ <strong>Kustomisasi:</strong> Ubah nilai <code>CFG.CLIMB_SPEED</code>, <code>CFG.MAX_STAMINA</code>, dan <code>CFG.STAMINA_DRAIN</code> di LocalScript untuk menyesuaikan kesulitan game.
+  </div>
+</section>
+
+<!-- ===================== DOWNLOAD ===================== -->
+<section id="tab-download">
+  <div class="section-tag">Download Semua File</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:32px;">
+    <div class="script-card">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:12px;">LOCAL SCRIPT</div>
+      <div class="script-title" style="margin-bottom:8px;font-family:'Bebas Neue';font-size:20px;">Sistem Climbing</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">Deteksi dinding dengan raycast, stamina system, TrussPart climbing, dan UI bar stamina.</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--cyan);"></div></div>
+      <button class="btn btn-dl" style="width:100%;justify-content:center;margin-top:12px;" onclick="dlScript('climb')">⬇ ClimbScript.lua</button>
+    </div>
+    <div class="script-card">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--green);letter-spacing:2px;margin-bottom:12px;">SERVER SCRIPT</div>
+      <div class="script-title" style="margin-bottom:8px;font-family:'Bebas Neue';font-size:20px;">Game Manager</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">Leaderboard, skor real-time, RemoteEvent, dan manajemen player masuk/keluar.</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--green);"></div></div>
+      <button class="btn btn-grn" style="width:100%;justify-content:center;margin-top:12px;" onclick="dlScript('server')">⬇ GameManager.lua</button>
+    </div>
+    <div class="script-card">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--yellow);letter-spacing:2px;margin-bottom:12px;">MODULE SCRIPT</div>
+      <div class="script-title" style="margin-bottom:8px;font-family:'Bebas Neue';font-size:20px;">Mountain Generator</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">Generator gunung procedural dengan snow cap, material batu, dan konfigurasi penuh.</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--yellow);"></div></div>
+      <button class="btn" style="width:100%;justify-content:center;margin-top:12px;background:var(--yellow);color:#000;font-family:'Space Mono';font-size:12px;" onclick="dlScript('mountain')">⬇ MountainGen.lua</button>
+    </div>
+  </div>
+
+  <div class="script-card" style="text-align:center;padding:32px;">
+    <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;margin-bottom:8px;color:var(--cyan);">⬇ DOWNLOAD SEMUA (ZIP)</div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:20px;">Semua 3 script Luau dalam satu paket — langsung siap pakai di Roblox Studio.</p>
+    <button class="btn btn-dl" style="font-size:14px;padding:14px 32px;" onclick="dlAll()">⬇ Download Full Pack</button>
+  </div>
+</section>
+
+<footer>ROBLOX MOUNT CLIMB SCRIPT PACK &nbsp;|&nbsp; OPEN SOURCE &nbsp;|&nbsp; LUAU 2026</footer>
+
+<script>
+// ---- TAB NAVIGATION ----
+function showTab(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ---- COPY CODE ----
+function copyCode(id) {
+  const pre = document.getElementById(id);
+  const text = pre.innerText.replace(/^COPY\n/, '');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = pre.querySelector('.btn-copy');
+    btn.textContent = 'COPIED!'; btn.style.color = '#39ff7a';
+    setTimeout(() => { btn.textContent = 'COPY'; btn.style.color = ''; }, 2000);
+  });
+}
+
+// ---- SCRIPT CONTENT ----
+const scripts = {
+  climb: `-- MountClimb LocalScript
+-- Taruh di: StarterCharacterScripts > LocalScript
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hum = char:WaitForChild("Humanoid")
+local root = char:WaitForChild("HumanoidRootPart")
+
+local CFG = {
+    CLIMB_SPEED   = 12,
+    MAX_STAMINA   = 100,
+    STAMINA_DRAIN = 0.8,
+    STAMINA_REGEN = 0.5,
+    CHECK_DIST    = 2.8,
+}
+
+local stamina = CFG.MAX_STAMINA
+local isClimbing = false
+local climbPart = Instance.new("TrussPart")
+climbPart.Size = Vector3.new(1, 6, 1)
+climbPart.Transparency = 1
+climbPart.CanCollide = false
+climbPart.Anchored = false
+climbPart.Parent = workspace
+
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 220, 0, 28)
+frame.Position = UDim2.new(0.5, -110, 0, 12)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+local bar = Instance.new("Frame", frame)
+bar.Size = UDim2.new(1, 0, 1, 0)
+bar.BackgroundColor3 = Color3.fromRGB(57, 255, 122)
+
+local function checkWall()
+    local dir = root.CFrame.LookVector * CFG.CHECK_DIST
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {char, climbPart}
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    return workspace:Raycast(root.Position, dir, params)
+end
+
+RunService.Heartbeat:Connect(function(dt)
+    local hit = checkWall()
+    local climbKey = UIS:IsKeyDown(Enum.KeyCode.W)
+        or UIS:IsKeyDown(Enum.KeyCode.Up)
+
+    if hit and climbKey and stamina > 0 then
+        isClimbing = true
+        climbPart.CFrame = CFrame.new(hit.Position)
+        hum:ChangeState(Enum.HumanoidStateType.Climbing)
+        stamina = math.max(0, stamina - CFG.STAMINA_DRAIN)
+    else
+        isClimbing = false
+        climbPart.CFrame = CFrame.new(0, -999, 0)
+        stamina = math.min(CFG.MAX_STAMINA, stamina + CFG.STAMINA_REGEN)
+    end
+
+    bar.Size = UDim2.new(stamina / CFG.MAX_STAMINA, 0, 1, 0)
+
+    if stamina == 0 and isClimbing then
+        hum:ChangeState(Enum.HumanoidStateType.Freefall)
+    end
+end)`,
+
+  server: `-- MountClimb Server Script
+-- Taruh di: ServerScriptService > Script
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local scoreEvent = Instance.new("RemoteEvent")
+scoreEvent.Name = "ScoreUpdate"
+scoreEvent.Parent = ReplicatedStorage
+
+local scores = {}
+
+local function setupLeaderboard(player)
+    local ls = Instance.new("Folder")
+    ls.Name = "leaderstats"
+    ls.Parent = player
+
+    local height = Instance.new("IntValue")
+    height.Name = "Ketinggian"
+    height.Value = 0
+    height.Parent = ls
+
+    local score = Instance.new("IntValue")
+    score.Name = "Skor"
+    score.Value = 0
+    score.Parent = ls
+
+    scores[player.UserId] = {height = 0, score = 0}
+end
+
+scoreEvent.OnServerEvent:Connect(function(player, h, s)
+    local ls = player:FindFirstChild("leaderstats")
+    if ls then
+        ls.Ketinggian.Value = math.max(ls.Ketinggian.Value, h)
+        ls.Skor.Value = ls.Skor.Value + s
+    end
+end)
+
+Players.PlayerAdded:Connect(setupLeaderboard)
+Players.PlayerRemoving:Connect(function(p)
+    scores[p.UserId] = nil
+end)`,
+
+  mountain: `-- MountainGenerator ModuleScript
+-- Taruh di: ReplicatedStorage > ModuleScript
+
+local MountainGen = {}
+
+function MountainGen:Generate(config)
+    config = config or {}
+    local cfg = {
+        baseX    = config.baseX    or 0,
+        baseZ    = config.baseZ    or 0,
+        height   = config.height   or 200,
+        width    = config.width    or 80,
+        steps    = config.steps    or 20,
+        material = config.material or Enum.Material.Rock,
+        color    = config.color    or Color3.fromRGB(120, 100, 80),
+    }
+
+    local folder = Instance.new("Folder")
+    folder.Name = "Mountain"
+    folder.Parent = workspace
+
+    for i = 1, cfg.steps do
+        local ratio = i / cfg.steps
+        local w = cfg.width * (1 - ratio * 0.9)
+        local y = (cfg.height / cfg.steps) * i
+        local offset = math.random(-3, 3)
+
+        local part = Instance.new("Part")
+        part.Size = Vector3.new(w, 8, w)
+        part.Position = Vector3.new(cfg.baseX + offset, y, cfg.baseZ + offset)
+        part.Material = cfg.material
+        part.BrickColor = BrickColor.new(cfg.color)
+        part.Anchored = true
+        part.Parent = folder
+
+        if i > cfg.steps * 0.8 then
+            part.Material = Enum.Material.Snow
+            part.BrickColor = BrickColor.new("White")
+        end
+    end
+
+    return folder
+end
+
+return MountainGen`
+};
+
+function dlScript(type) {
+  const names = { climb: 'ClimbScript.lua', server: 'GameManager.lua', mountain: 'MountainGenerator.lua' };
+  const blob = new Blob([scripts[type]], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = names[type];
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function dlAll() {
+  // Download all 3 scripts sequentially
+  ['climb', 'server', 'mountain'].forEach((t, i) => setTimeout(() => dlScript(t), i * 300));
+}
+
+// ============================================================
+// GAME ENGINE
+// ============================================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+let gameState = 'idle'; // idle, playing, dead, win
+let gameTimer = 0;
+let timerInterval = null;
+
+// Player
+let player2 = { x: 80, y: 340, vy: 0, vx: 0, onGround: false, isClimbing: false, stamina: 100, score: 0, level: 1 };
+
+// Platforms / mountain
+let platforms = [];
+let stars = [];
+let particles = [];
+let camera = { y: 0 };
+let scrollTarget = 0;
+let maxHeight = 0;
+const GOAL_HEIGHT = 1800;
+
+const DIFF = {
+  easy:   { gravity: 0.35, jumpPow: -9, climbSpeed: 3.5, staminaDrain: 0.25 },
+  normal: { gravity: 0.45, jumpPow:-10.5, climbSpeed: 3,   staminaDrain: 0.5 },
+  hard:   { gravity: 0.55, jumpPow:-12,   climbSpeed: 2.5, staminaDrain: 0.9 },
+};
+
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup',   e => { keys[e.code] = false; });
+window.addEventListener('keydown', e => {
+  if (e.code === 'KeyS' && gameState === 'idle') startGame();
+  if (e.code === 'KeyR') resetGame();
+});
+
+function genPlatforms() {
+  platforms = [];
+  stars = [];
+  // Ground
+  platforms.push({ x: 0, y: H - 40, w: W, h: 40, type: 'ground' });
+  // Mountain platforms going up
+  let py = H - 120;
+  let px = 60;
+  for (let i = 0; i < 55; i++) {
+    const w = Math.random() * 90 + 60;
+    px = Math.max(20, Math.min(W - w - 20, px + (Math.random() - 0.5) * 160));
+    py -= Math.random() * 55 + 32;
+    const type = i > 35 ? 'snow' : i > 20 ? 'rock' : 'dirt';
+    const isCl = Math.random() > 0.45 && i > 0;
+    platforms.push({ x: px, y: py, w, h: 18, type, climbable: isCl });
+    if (Math.random() > 0.65) {
+      stars.push({ x: px + w / 2 + (Math.random()-0.5)*40, y: py - 24, collected: false });
+    }
+  }
+  // Summit
+  platforms.push({ x: W/2 - 60, y: py - 50, w: 120, h: 22, type: 'summit' });
+}
+
+function resetGame() {
+  clearInterval(timerInterval);
+  gameTimer = 0;
+  player2 = { x: 80, y: 340, vy: 0, vx: 0, onGround: false, isClimbing: false, stamina: 100, score: 0, level: 1 };
+  camera.y = 0; scrollTarget = 0; maxHeight = 0;
+  particles = [];
+  genPlatforms();
+  gameState = 'idle';
+  document.getElementById('gameStatus').textContent = '⛰ Siap mendaki — tekan SPACE atau klik START';
+  document.getElementById('btnStart').textContent = '▶ START GAME';
+  updateStats();
+}
+
+function startGame() {
+  if (gameState === 'playing') return;
+  gameState = 'playing';
+  document.getElementById('btnStart').textContent = '⏸ PLAYING...';
+  document.getElementById('gameStatus').textContent = '🧗 Mendaki! Gunakan ← → SPACE ↑';
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (gameState === 'playing') {
+      gameTimer++;
+      const m = String(Math.floor(gameTimer/60)).padStart(2,'0');
+      const s = String(gameTimer%60).padStart(2,'0');
+      document.getElementById('gameTime').textContent = m+':'+s;
+    }
+  }, 1000);
+  loop();
+}
+
+function spawnParticle(x, y, color) {
+  for (let i=0;i<6;i++) {
+    particles.push({
+      x, y, vx: (Math.random()-0.5)*4, vy: Math.random()*-4-1,
+      life: 1, color
+    });
+  }
+}
+
+let rafId = null;
+function loop() {
+  if (gameState !== 'playing') return;
+  update();
+  draw();
+  rafId = requestAnimationFrame(loop);
+}
+
+function update() {
+  const diff = DIFF[document.getElementById('diffSel').value];
+  const p = player2;
+
+  // Input
+  if (keys['ArrowLeft'] || keys['KeyA']) p.vx = -4;
+  else if (keys['ArrowRight'] || keys['KeyD']) p.vx = 4;
+  else p.vx *= 0.7;
+
+  const wantClimb = keys['Space'] || keys['ArrowUp'] || keys['KeyW'];
+
+  // Find platform below / beside
+  p.onGround = false;
+  p.isClimbing = false;
+
+  for (const pl of platforms) {
+    const inX = p.x + 14 > pl.x && p.x < pl.x + pl.w;
+    const prevBottom = p.y + p.vy;
+
+    // Landing
+    if (inX && p.y + 20 <= pl.y + 2 && prevBottom + 20 >= pl.y - 2 && p.vy >= 0) {
+      p.y = pl.y - 20;
+      p.vy = 0;
+      p.onGround = true;
+      if (pl.type === 'summit') {
+        win();
+      }
+    }
+
+    // Climbing
+    if (pl.climbable && wantClimb && p.stamina > 0) {
+      const nearX = p.x > pl.x - 20 && p.x < pl.x + pl.w + 20;
+      const nearY = p.y + 20 > pl.y - 60 && p.y < pl.y + pl.h + 20;
+      if (nearX && nearY) {
+        p.isClimbing = true;
+        p.vy = -diff.climbSpeed;
+        p.stamina = Math.max(0, p.stamina - diff.staminaDrain);
+      }
+    }
+  }
+
+  // Jump
+  if ((keys['Space']) && p.onGround) {
+    p.vy = diff.jumpPow;
+    p.onGround = false;
+  }
+
+  // Physics
+  if (!p.isClimbing) p.vy += diff.gravity;
+  p.vy = Math.max(-15, Math.min(p.vy, 18));
+  p.x += p.vx;
+  p.y += p.vy;
+
+  // Stamina regen
+  if (!p.isClimbing) p.stamina = Math.min(100, p.stamina + 0.3);
+
+  // Bounds
+  if (p.x < 0) p.x = 0;
+  if (p.x > W - 20) p.x = W - 20;
+
+  // Fell off
+  if (p.y > H + 50) { die(); return; }
+
+  // Camera scroll
+  const screenY = p.y - camera.y;
+  if (screenY < H * 0.45) scrollTarget = p.y - H * 0.45;
+  if (screenY > H * 0.7) scrollTarget = p.y - H * 0.7;
+  camera.y += (scrollTarget - camera.y) * 0.1;
+
+  // Max height
+  const altitude = Math.max(0, Math.round((H - 40 - p.y) * 0.5));
+  if (altitude > maxHeight) {
+    maxHeight = altitude;
+    p.score += 1;
+    if (altitude > 200 && p.level < 2) { p.level = 2; }
+    if (altitude > 500 && p.level < 3) { p.level = 3; }
+    if (altitude > 900 && p.level < 4) { p.level = 4; }
+    if (altitude > 1400 && p.level < 5) { p.level = 5; }
+  }
+
+  // Collect stars
+  for (const st of stars) {
+    if (!st.collected && Math.abs(st.x - p.x - 10) < 22 && Math.abs(st.y - p.y - 10) < 22) {
+      st.collected = true;
+      p.score += 25;
+      spawnParticle(st.x, st.y - camera.y, '#ffd32a');
+    }
+  }
+
+  // Update particles
+  particles = particles.filter(pt => {
+    pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.15; pt.life -= 0.04;
+    return pt.life > 0;
+  });
+
+  updateStats();
+}
+
+function updateStats() {
+  const p = player2;
+  const alt = Math.max(0, Math.round((H - 40 - p.y) * 0.5));
+  document.getElementById('statAlt').textContent = alt;
+  document.getElementById('statScore').textContent = p.score;
+  document.getElementById('statStamina').textContent = Math.round(p.stamina);
+  document.getElementById('statLevel').textContent = p.level;
+}
+
+function die() {
+  gameState = 'dead';
+  cancelAnimationFrame(rafId);
+  clearInterval(timerInterval);
+  document.getElementById('gameStatus').textContent = '💀 Kamu jatuh! Tekan R untuk restart.';
+  document.getElementById('btnStart').textContent = '▶ START GAME';
+  draw();
+}
+
+function win() {
+  if (gameState === 'win') return;
+  gameState = 'win';
+  cancelAnimationFrame(rafId);
+  clearInterval(timerInterval);
+  player2.score += 500;
+  updateStats();
+  document.getElementById('gameStatus').textContent = '🏆 PUNCAK TERCAPAI! Skor bonus +500! Tekan R untuk main lagi.';
+  document.getElementById('btnStart').textContent = '▶ START GAME';
+  draw();
+}
+
+// ---- DRAWING ----
+function draw() {
+  const p = player2;
+  const cy = camera.y;
+
+  // Sky gradient based on altitude
+  const alt = Math.max(0, (H - 40 - p.y) / (H * 6));
+  const r1 = Math.round(20 + alt*10), g1 = Math.round(30 + alt*60), b1 = Math.round(60 + alt*120);
+  const r2 = Math.round(10 + alt*5), g2 = Math.round(15 + alt*30), b2 = Math.round(40 + alt*80);
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0, `rgb(${r1},${g1},${b1})`);
+  grad.addColorStop(1, `rgb(${r2},${g2},${b2})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+
+  // Stars (sky)
+  if (alt > 0.3) {
+    ctx.fillStyle = `rgba(255,255,255,${Math.min(0.8, (alt-0.3)*3)})`;
+    for (let i=0;i<40;i++) {
+      const sx = ((i*137)%W), sy = ((i*97)%200);
+      ctx.fillRect(sx,sy,1,1);
+    }
+  }
+
+  // Distance mountains bg
+  ctx.fillStyle = `rgba(40,60,100,${0.3 + alt*0.3})`;
+  for (let m=0;m<5;m++) {
+    const mx = m*200 - 50;
+    ctx.beginPath();
+    ctx.moveTo(mx,H);
+    ctx.lineTo(mx+100, H - 120 - m*20 + cy*0.02);
+    ctx.lineTo(mx+200, H);
+    ctx.fill();
+  }
+
+  // Platforms
+  for (const pl of platforms) {
+    const drawY = pl.y - cy;
+    if (drawY > H+20 || drawY < -40) continue;
+
+    const colors = {
+      ground: '#2a3a1a', dirt: '#5a4030', rock: '#4a4a5a',
+      snow: '#ddeeff', summit: '#ffd700'
+    };
+    ctx.fillStyle = colors[pl.type] || '#4a4a5a';
+    ctx.fillRect(pl.x, drawY, pl.w, pl.h);
+
+    // Top highlight
+    ctx.fillStyle = pl.type === 'snow' ? '#ffffff' : pl.type === 'summit' ? '#ffe033' : 'rgba(255,255,255,0.12)';
+    ctx.fillRect(pl.x, drawY, pl.w, 3);
+
+    if (pl.climbable) {
+      ctx.strokeStyle = 'rgba(0,212,255,0.3)';
+      ctx.lineWidth = 1;
+      for (let i=0;i<pl.w;i+=10) {
+        ctx.beginPath(); ctx.moveTo(pl.x+i, drawY); ctx.lineTo(pl.x+i, drawY+pl.h); ctx.stroke();
+      }
+    }
+
+    // Summit flag
+    if (pl.type === 'summit') {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(pl.x + pl.w/2, drawY - 40, 3, 40);
+      ctx.fillStyle = '#ff4757';
+      ctx.fillRect(pl.x + pl.w/2 + 3, drawY - 40, 20, 14);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText('PUNCAK!', pl.x + pl.w/2 - 28, drawY - 48);
+    }
+  }
+
+  // Collectible stars
+  for (const st of stars) {
+    if (st.collected) continue;
+    const sy = st.y - cy;
+    if (sy < -10 || sy > H+10) continue;
+    ctx.fillStyle = '#ffd32a';
+    ctx.font = '16px serif';
+    ctx.fillText('⭐', st.x - 8, sy + 8);
+  }
+
+  // Player
+  const px = p.x, py = p.y - cy;
+  if (p.isClimbing) {
+    ctx.fillStyle = '#00d4ff';
+  } else if (p.stamina < 30) {
+    ctx.fillStyle = '#ff4757';
+  } else {
+    ctx.fillStyle = '#ffffff';
+  }
+  // Body
+  ctx.fillRect(px, py, 20, 22);
+  // Head
+  ctx.fillStyle = '#ffcc99';
+  ctx.fillRect(px+3, py-10, 14, 12);
+  // Eyes
+  ctx.fillStyle = '#222';
+  ctx.fillRect(px+5, py-7, 3, 3);
+  ctx.fillRect(px+12, py-7, 3, 3);
+  // Climbing rope
+  if (p.isClimbing) {
+    ctx.strokeStyle = 'rgba(0,212,255,0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(px+10, py); ctx.lineTo(px+10, py-30); ctx.stroke();
+  }
+
+  // Particles
+  for (const pt of particles) {
+    ctx.globalAlpha = pt.life;
+    ctx.fillStyle = pt.color;
+    ctx.fillRect(pt.x-2, pt.y-2, 5, 5);
+  }
+  ctx.globalAlpha = 1;
+
+  // Stamina bar (HUD)
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(12, 12, 154, 14);
+  const sc = p.stamina < 30 ? '#ff4757' : p.stamina < 60 ? '#ffd32a' : '#39ff7a';
+  ctx.fillStyle = sc;
+  ctx.fillRect(13, 13, p.stamina * 1.5, 12);
+  ctx.fillStyle = '#fff'; ctx.font = '10px monospace';
+  ctx.fillText('STAMINA', 14, 22);
+
+  // Altitude HUD
+  const altDisplay = Math.max(0, Math.round((H - 40 - p.y) * 0.5));
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(W-100, 12, 88, 22);
+  ctx.fillStyle = '#00d4ff'; ctx.font = 'bold 13px monospace';
+  ctx.fillText(altDisplay + 'm ▲', W-95, 28);
+
+  // Dead / Win overlay
+  if (gameState === 'dead') {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#ff4757'; ctx.font = 'bold 48px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', W/2, H/2-20);
+    ctx.fillStyle = '#fff'; ctx.font = '16px monospace';
+    ctx.fillText('Tekan R untuk restart', W/2, H/2+20);
+    ctx.textAlign = 'left';
+  }
+  if (gameState === 'win') {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#ffd32a'; ctx.font = 'bold 44px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏆 MENANG!', W/2, H/2-30);
+    ctx.fillStyle = '#fff'; ctx.font = '16px monospace';
+    ctx.fillText('Skor: ' + player2.score + ' | Tekan R untuk main lagi', W/2, H/2+20);
+    ctx.textAlign = 'left';
+  }
+  if (gameState === 'idle') {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#00d4ff'; ctx.font = 'bold 36px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('⛰ MOUNT CLIMB', W/2, H/2-30);
+    ctx.fillStyle = '#aaa'; ctx.font = '14px monospace';
+    ctx.fillText('Tekan S atau klik START untuk bermain', W/2, H/2+10);
+    ctx.textAlign = 'left';
+  }
+}
+
+// Init
+genPlatforms();
+draw();
+</script>
+</body>
+</html>
